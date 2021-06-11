@@ -10,7 +10,8 @@ import adapterErrorHandler from "../../../adapters/error-handler"
  */
 export default async function email(email, provider, options) {
   try {
-    const { baseUrl, basePath, adapter, logger } = options
+    const { baseUrl, basePath, adapter, logger, callbackUrl, serviceName } =
+      options
 
     const { createVerificationRequest } = adapterErrorHandler(
       await adapter.getAdapter(options),
@@ -28,7 +29,11 @@ export default async function email(email, provider, options) {
     // Send email with link containing token (the unhashed version)
     const url = `${baseUrl}${basePath}/callback/${encodeURIComponent(
       provider.id
-    )}?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`
+    )}?email=${encodeURIComponent(email)}&token=${encodeURIComponent(
+      token
+    )}&callbackUrl=${encodeURIComponent(
+      callbackUrl
+    )}&serviceName=${encodeURIComponent(serviceName)}`
 
     // @TODO Create invite (send secret so can be hashed)
     await createVerificationRequest(
