@@ -15,6 +15,7 @@ import {
   createContext,
   createElement,
 } from "react"
+import Cookies from "js-cookie"
 import _logger, { proxyLogger } from "../lib/logger"
 import parseUrl from "../lib/parse-url"
 
@@ -175,7 +176,14 @@ export async function getProviders() {
 }
 
 export async function signIn(provider, options = {}, authorizationParams = {}) {
-  const { callbackUrl = window.location.href, redirect = true } = options
+  const {
+    callbackUrl = window.location.href,
+    serviceName = window.location.href,
+    redirect = true,
+  } = options
+
+  Cookies.set("next-auth.callback-url", callbackUrl)
+  Cookies.set("next-auth.service-name", serviceName)
 
   const baseUrl = _apiBaseUrl()
   const providers = await getProviders()
@@ -318,7 +326,9 @@ async function _fetchData(path, { ctx, req = ctx?.req } = {}) {
   try {
     const baseUrl = await _apiBaseUrl()
     const options = req ? { headers: { cookie: req.headers.cookie } } : {}
-    const res = await fetch(`${baseUrl}/${path}`, options)
+    // need to include credentials since other origins call to one central auth server to get session
+    const myOptions = { ...options, credentials: "include" }
+    const res = await fetch(`${baseUrl}/${path}`, myOptions)
     const data = await res.json()
     if (!res.ok) throw data
     return Object.keys(data).length > 0 ? data : null // Return null if data empty
